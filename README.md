@@ -1,194 +1,226 @@
 # Hack The Box: Redeemer — Write-up
-
 <img width="1376" height="768" alt="image" src="https://github.com/user-attachments/assets/6b253b69-f310-4008-af7e-dc41b4f59e12" />
 
+## Introduction
 
-## Einführung
+Redeemer is a beginner-friendly machine from the Hack The Box Starting Point series.
 
-Redeemer ist eine anfängerfreundliche Maschine in der Hack The Box Startpunkt-Serie.
-Das Hauptaugenmerk dieser Maschine liegt auf der Interaktion mit einem RedisRedis-Dienst, der ohne Authentifizierung freigelegt wird.
+The main focus of this machine is interacting with a Redis service that is exposed without authentication.
 
-Ziel ist es, den offenen Port zu identifizieren, eine Verbindung zum Redis-Server herzustellen, Serverinformationen abzurufen, die Datenbank aufzuzählen und schließlich das gespeicherte Flag zu extrahieren.
-Ziel
+The goal is to:
+
+Identify the open port
+
+Connect to the Redis server
+
+Retrieve server information
+
+List the database contents
+
+Extract the stored flag
+
+## Target:
 ```
 10.129.38.5
 ```
-## Schritt 1 — Offene Ports Identifizieren
+## Step 1 — Identify Open Ports
 
-Der erste Schritt besteht darin, die Maschine zu scannen, um offene Ports zu entdecken.
+The first step is to scan the machine to discover open ports.
 ```
 nmap -sV 10.129.38.5
 ```
-Dieser Scan zeigt, dass Port 6379 geöffnet ist
+The scan shows that port 6379 is open.
 ```
-6379/tcp offenes Redis
+6379/tcp open redis
 ```
-Port 6379 ist der Standardport, der von Redis-Servern verwendet wird.
-Antwort
+Port 6379 is the default port used by Redis servers.
+
+Answer:
 ```
 6379
 ```
-## Schritt 2 — Identifizieren Sie den laufenden Dienst
+## Step 2 — Identify the Running Service
 
-Die Scanausgabe zeigt bereits den laufenden Dienst.
+The scan output already shows the running service.
 ```
-6379/tcp offenes Redis
+6379/tcp open redis
 ```
-Redis ist eine Schlüssel-Wert-Datenbank im Speicher, die häufig für das Caching, die Speicherung von Sitzungen und den schnellen Datenabruf verwendet wird.
-Antwort
+Redis is a key-value database stored in memory, often used for:
+
+caching
+
+session storage
+
+fast data retrieval
+
+Answer:
 ```
 redis
 ```
-## Schritt 3 — Identifizieren Sie den Typ der Datenbank
+## Step 3 — Identify the Type of Database
 
-Redis speichert seine Daten hauptsächlich im RAM, was extrem schnelle Lese- und Schreibvorgänge ermöglicht.
+Redis stores its data primarily in RAM, which allows extremely fast read and write operations.
 
-Im Gegensatz zu herkömmlichen disk-basierten Datenbanken wird Redis als In-Memory-Datenbank klassifiziert.
-Antwort
+Unlike traditional disk-based databases, Redis is classified as an:
+
+In-Memory Database
+
+Answer:
 ```
-In-Memory-Datenbank
+In-Memory Database
 ```
-## Schritt 4 — Redis Befehlszeilen-Tool
+## Step 4 — Redis Command Line Tool
 
-Um vom Terminal aus mit Redis zu interagieren, ist das Standard-Tool redis-cli.
+To interact with Redis from the terminal, the standard tool is redis-cli.
 
-Dieses Dienstprogramm ermöglicht das Senden von Befehlen direkt an den Redis-Server.
+This utility allows sending commands directly to the Redis server.
 
-Beispiel:
+Example:
 ```
 redis-cli
 ```
-Antwort
+Answer:
 ```
 redis-cli
 ```
-## Schritt 5 – Geben Sie den Host an
+## Step 5 — Specify the Host
 
-Da der Redis-Server auf einem Remote-Computer ausgeführt wird, müssen wir den Host beim Verbinden angeben.
+Since the Redis server is running on a remote machine, we must specify the host when connecting.
 
-Beispiel:
+Example:
 ```
 redis-cli -h 10.129.38.5 -p 6379
 ```
-Das Flag, das verwendet wird, um den Host anzugeben, ist:
-
--h
-
-Antwort
+The flag used to specify the host is:
 ```
 -h
 ```
-## Schritt 6 — Server-Informationen abrufen
+Answer:
+```
+-h
+```
+## Step 6 — Retrieve Server Information
 
-Nach der Verbindung zu Redis können wir Informationen über den Server mithilfe der INFOBefehl.
+After connecting to Redis, we can retrieve server information using the INFO command.
 
-Beispiel:
+Example:
 ```
 redis-cli -h 10.129.38.5 -p 6379 INFO
 ```
-Dieser Befehl zeigt verschiedene Details zur Redis-Instanz an, einschließlich Serverstatistiken, Speichernutzung und Datenbankinformationen.
-Antwort
-```
-Info
-```
-## Schritt 7 — Finden Sie die Redis-Version
+This command displays various details about the Redis instance, including:
 
-Um die Serverversion anzuzeigen, können wir den Server-Bereich der INFO-Ausgabe abfragen.
-```
-redis-cli -h 10.129.38.5 -p 6379 INFO Server
-```
-Beispielausgabe:
+server statistics
 
-## Server
+memory usage
+
+database information
+
+Answer:
+```
+INFO
+```
+## Step 7 — Find the Redis Version
+
+To view the server version, we can query the server section of the INFO output.
+```
+redis-cli -h 10.129.38.5 -p 6379 INFO server
+```
+Example output:
+
+# Server
 ```
 redis_version:5.0.7
 ```
-Antwort
+Answer:
 ```
 5.0.7
 ```
-## Schritt 8 — Wählen Sie eine Redis-Datenbank
+## Step 8 — Select a Redis Database
 
-Redis unterstützt mehrere logische Datenbanken.
-Um zwischen ihnen zu wechseln, die SELECTBefehl wird verwendet.
+Redis supports multiple logical databases.
 
-Beispiel:
+To switch between them, the SELECT command is used.
 
-WÄHLEN SIE 0
+Example:
 
-Datenbank 0 ist die Standarddatenbank.
-Antwort
+SELECT 0
+
+Database 0 is the default database.
+
+Answer:
 ```
 select 0
 ```
 ## Step 9 — Count Keys in Database 0
 
-To determine how many keys exist in the database, we can inspect the Keyspace section of the INFO output.
+To determine how many keys exist in the database, we inspect the Keyspace section of the INFO output.
 ```
 redis-cli -h 10.129.38.5 -p 6379 INFO keyspace
 ```
-Beispielausgabe:
-
-## Keyspace
+Example output:
 ```
+# Keyspace
 db0:keys=4,expires=0,avg_ttl=0
 ```
+
 This indicates that 4 keys exist in database 0.
-Antwort
+
+Answer:
 ```
 4
 ```
-## Schritt 10 — Alle Schlüssel auflisten
+## Step 10 — List All Keys
 
-Um alle in der ausgewählten Datenbank gespeicherten Schlüssel aufzuzählen, KEYSBefehl wird verwendet.
+To enumerate all keys stored in the selected database, the KEYS command is used.
 ```
 redis-cli -h 10.129.38.5 -p 6379 KEYS *
 ```
-The wildcard * tells Redis to list all keys.
-Antwort
+The wildcard * instructs Redis to list all keys.
+
+Answer:
 ```
 keys *
 ```
-Abrufen der Flagge
+Retrieve the Flag
 
-Nach dem Auflisten der Schlüssel enthält einer von ihnen die Flagge.
+After listing the keys, one of them contains the flag.
 
-Wir können den in einem Schlüssel gespeicherten Wert mithilfe der GETBefehl.
+We can retrieve the value stored in a key using the GET command.
 ```
 redis-cli -h 10.129.38.5 -p 6379 GET flag
 ```
-Ausgabe:
+Output:
 ```
 03e1d2b376c37ab3f5319922053953eb
 ```
-Da Redis ohne Authentifizierung läuft, ermöglicht es den direkten Zugriff auf die gespeicherten Daten.
-Wurzelfahne
+Because Redis is running without authentication, it allows direct access to the stored data.
+
+Root Flag:
 ```
 03e1d2b376c37ab3f5319922053953eb
 ```
-## Verwendete Befehle:
+Commands Used
 ```
- nmap -sV 10.129.38.5
+nmap -sV 10.129.38.5
 
- redis-cli -h 10.129.38.5 -p 6379 INFO
+redis-cli -h 10.129.38.5 -p 6379 INFO
 
- redis-cli -h 10.129.38.5 -p 6379 INFO Server
+redis-cli -h 10.129.38.5 -p 6379 INFO server
 
- redis-cli -h 10.129.38.5 -p 6379 INFO-Schlüsselraum
+redis-cli -h 10.129.38.5 -p 6379 INFO keyspace
 
- redis-cli -h 10.129.38.5 -p 6379 SCHLÜSSEL *
+redis-cli -h 10.129.38.5 -p 6379 KEYS *
 
- redis-cli -h 10.129.38.5 -p 6379 GET flag
+redis-cli -h 10.129.38.5 -p 6379 GET flag
 ```
-## Schlussfolgerung
+Conclusion
 
-Redeemer ist eine großartige Einführungsmaschine, die die Risiken der Ausführung von Redis ohne Authentifizierung demonstriert.
+Redeemer is a great introductory machine that demonstrates the risks of running Redis without authentication.
 
-Wichtige Takeaways:
+Key takeaways:
 
-    Immer sichere Redis-Instanzen mit Authentifizierung
-    Vermeiden Sie es, Redis direkt dem Internet auszusetzen
-    Falsch konfigurierte Dienste können sensible Daten mit minimalem Aufwand auslaufen lassen
+Always secure Redis instances with authentication
 
+Avoid exposing Redis directly to the internet
 
-
+Misconfigured services can leak sensitive data with minimal effort
